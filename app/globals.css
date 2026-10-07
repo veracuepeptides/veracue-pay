@@ -1,0 +1,117 @@
+@import "tailwindcss";
+
+/* Veracue brand palette (Veracue/docs/COLOR_PALETTE.md). Deep surfaces use olive-charcoal. */
+@theme {
+  --color-terracotta: #cb997e;
+  --color-almond: #eddcd2;
+  --color-linen: #fff1e6;
+  --color-alabaster: #f0efeb;
+  --color-sand: #ddbea9;
+  --color-sage: #a5a58d;
+  --color-stone: #b7b7a4;
+  --color-obsidian: #20221c;
+  --color-charcoal: #191b16;
+  --color-danger: #b85450;
+  --color-ok: #6b8e5e;
+
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-heading: var(--font-sora), var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-editorial: var(--font-tenor), var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--color-alabaster);
+}
+
+body {
+  margin: 0;
+  background: var(--color-alabaster);
+  color: var(--color-obsidian);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: var(--color-terracotta);
+  color: var(--color-charcoal);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-sage);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+[id] {
+  scroll-margin-top: 6rem;
+}
+
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Native accordion */
+details > summary {
+  list-style: none;
+  cursor: pointer;
+}
+details > summary::-webkit-details-marker {
+  display: none;
+}
+details[open] .faq-plus {
+  transform: rotate(45deg);
+}
+
+/* Entrance motion: a short rise and fade, once. */
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Marquees: the track holds two identical halves, so -50% loops seamlessly. */
+@keyframes marquee-left {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@keyframes marquee-right {
+  from { transform: translateX(-50%); }
+  to { transform: translateX(0); }
+}
+.marquee-left { animation: marquee-left var(--marquee-speed, 40s) linear infinite; }
+.marquee-right { animation: marquee-right var(--marquee-speed, 40s) linear infinite; }
+.marquee-pause:hover .marquee-left,
+.marquee-pause:hover .marquee-right { animation-play-state: paused; }
+
+@keyframes float-soft {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.float-soft { animation: float-soft 8s ease-in-out infinite; }
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(107, 142, 94, 0.45); }
+  100% { box-shadow: 0 0 0 10px rgba(107, 142, 94, 0); }
+}
+.pulse-ring { animation: pulse-ring 2.2s ease-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .marquee-left, .marquee-right, .float-soft, .pulse-ring { animation: none; }
+  *, *::before, *::after { transition-duration: 0.01ms !important; }
+}
