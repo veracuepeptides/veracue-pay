@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { getStripe } from '@/lib/stripe';
-import { getMerchantById, isReturnUrlAllowed, publicMerchant } from '@/lib/merchants';
+import { decodeReturnUrl, getMerchantById, publicMerchant } from '@/lib/merchants';
 import { PayClient } from './PayClient';
 import { PayShell } from './PayShell';
 import { SITE } from '@/lib/site';
@@ -30,8 +30,8 @@ export default async function PayPage({ searchParams }: { searchParams: Promise<
   // Who is being paid, and where to send the customer afterwards, live only in the PaymentIntent's
   // metadata, set once server-side when the payment was created. Nothing is read from the URL.
   const merchant = getMerchantById(paymentIntent.metadata?.merchantId);
-  const returnUrl = paymentIntent.metadata?.returnUrl;
-  if (!merchant || !returnUrl || !isReturnUrlAllowed(returnUrl, merchant)) {
+  const returnUrl = merchant ? decodeReturnUrl(paymentIntent.metadata, merchant) : null;
+  if (!merchant || !returnUrl) {
     return <Unavailable title="This payment link isn’t valid" message="We can’t tell who this payment is for, so we won’t take it. Please return to the website you came from." />;
   }
 
@@ -52,6 +52,7 @@ export default async function PayPage({ searchParams }: { searchParams: Promise<
   return (
     <PayClient
       clientSecret={paymentIntent.client_secret}
+      paymentIntentId={paymentIntent.id}
       returnUrl={returnUrl}
       amount={paymentIntent.amount}
       currency={paymentIntent.currency}

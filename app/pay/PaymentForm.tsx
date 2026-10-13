@@ -5,7 +5,7 @@ import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js'
 import { Lock } from 'lucide-react';
 import { HeroButton } from '@/components/hero-button';
 
-export function PaymentForm({ returnUrl, total }: { returnUrl: string; total: string }) {
+export function PaymentForm({ paymentIntentId, total }: { paymentIntentId: string; total: string }) {
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -26,11 +26,13 @@ export function PaymentForm({ returnUrl, total }: { returnUrl: string; total: st
       return;
     }
 
-    // Stripe redirects the customer to returnUrl (the merchant's website) once the payment is
-    // confirmed, so this only resolves here when something went wrong.
+    // Stripe redirects the customer to this site's /return once the payment is confirmed, so this
+    // only resolves here when something went wrong. /return then forwards them to the merchant.
+    // The merchant's own address is deliberately never handed to Stripe, where it would show up in
+    // the payment and in the request logs.
     const { error: confirmError } = await stripe.confirmPayment({
       elements,
-      confirmParams: { return_url: returnUrl },
+      confirmParams: { return_url: `${window.location.origin}/return?pi=${encodeURIComponent(paymentIntentId)}` },
     });
 
     if (confirmError) {

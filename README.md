@@ -11,8 +11,9 @@ npm run dev
 
 ## How the platform is set up
 
-- **One payment page, many registered sites.** Every site that takes payments through VeracuePay is registered
-  in `VERACUEPAY_MERCHANTS`. A payment for a merchant that isn't registered is refused.
+- **Registered sites only.** Every site that takes payments through VeracuePay is registered, and a payment for
+  one that isn't registered is refused. One shop is registered with the plain `SHOP_*` variables and
+  `VERACUEPAY_API_SECRET`; several are registered with the JSON list in `VERACUEPAY_MERCHANTS`.
 - **Each checkout names the business.** The pay page looks the merchant up from the payment itself and shows
   its name, order and amount.
 - **Charges are made on VeracuePay's own Stripe account** (the keys in `.env`), the same model as nextlvlpay.
@@ -22,7 +23,8 @@ npm run dev
   and a merchant can only read its own payments and return customers to its own registered origins
   (`origin` plus any `altOrigins`).
 
-Register a site by adding an entry to `VERACUEPAY_MERCHANTS` (see `.env.example`) and giving the site its secret.
+Register a site by setting its `SHOP_*` variables (or adding an entry to `VERACUEPAY_MERCHANTS`; see `.env.example`)
+and giving the site its secret.
 Only lawful businesses that meet Stripe's terms should be registered.
 
 ## Merchant integration
@@ -33,12 +35,27 @@ All server-to-server calls send `Authorization: Bearer <merchant secret>`.
    (`amount` in major units, e.g. `151.95`; `returnUrl` must be on the merchant's registered origin).
    Returns `{ paymentIntentId }`.
 2. **Redirect** the customer to `https://<this site>/pay?pi=<paymentIntentId>`.
-3. After payment Stripe returns the customer to `returnUrl`.
+3. After payment Stripe returns the customer to this site's `/return`, which forwards them to `returnUrl`
+   (Stripe's `payment_intent`, `payment_intent_client_secret` and `redirect_status` parameters are passed on).
+   Your web address is never stored on the Stripe payment or sent to Stripe: the payment keeps only a position
+   among your registered origins and the path, and `/return` rebuilds the address from your registered origins.
 4. **Verify** — `POST /api/payments/status` with `{ paymentIntentId }` returns the real state from Stripe.
    Never trust the redirect alone.
 5. **Webhook fallback** — VeracuePay POSTs `{ orderId, eventType: 'succeeded' | 'failed' | 'refunded' }` to the
    merchant's `webhookUrl` (default `{origin}/api/webhooks/veracuepay`) with the same bearer secret. The merchant
    should re-check via step 4 before acting.
+
+## Deployment (veracuepay.com)
+
+- **Domain:** add `veracuepay.com` (and `www.veracuepay.com`, redirecting to the apex) to the Vercel project.
+  `NEXT_PUBLIC_SITE_URL` must be `https://veracuepay.com`.
+- **Search engines:** the whole site is `noindex`. Every response carries `X-Robots-Tag: noindex, nofollow,
+  noarchive, noimageindex` (`next.config.mjs`), every page carries the same robots meta tag, and there is no
+  sitemap. `robots.txt` leaves pages crawlable so a crawler can read the noindex, and blocks only `/api/`.
+- **Link previews:** `app/opengraph-image.tsx` draws the Open Graph / Twitter image in the brand colours.
+- **Stripe:** webhook endpoint `https://veracuepay.com/api/webhooks/stripe`; register `veracuepay.com` under
+  Settings -> Payment method domains so Apple Pay and Google Pay appear.
+- **Environment variables:** see `.env.example`.
 
 ## Identity and design
 

@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import type Stripe from 'stripe';
 import { getStripe } from '@/lib/stripe';
-import { authenticateMerchant, isReturnUrlAllowed } from '@/lib/merchants';
+import { authenticateMerchant, encodeReturnUrl } from '@/lib/merchants';
 
 // Stripe's ceiling for a single USD charge ($999,999.99). Anything above is a bug on the caller's side.
 const MAX_AMOUNT_CENTS = 99_999_999;
@@ -26,7 +26,10 @@ export async function POST(req: Request) {
       return new Response('Missing or invalid fields', { status: 400 });
     }
 
-    if (!isReturnUrlAllowed(returnUrl, merchant)) {
+    // Only a position among the merchant's registered origins and a path are kept on the Stripe
+    // payment, never the merchant's own web address (see encodeReturnUrl).
+    const encodedReturn = encodeReturnUrl(returnUrl, merchant);
+    if (!encodedReturn) {
       return new Response('returnUrl must be on one of your registered origins', { status: 400 });
     }
 
@@ -58,7 +61,7 @@ export async function POST(req: Request) {
         ...(typeof orderNumber === 'string' || typeof orderNumber === 'number'
           ? (String(orderNumber).trim() ? { orderNumber: String(orderNumber).trim().slice(0, 40) } : {})
           : {}),
-        returnUrl,
+        ...encodedReturn,
       },
     };
 

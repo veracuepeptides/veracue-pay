@@ -44,6 +44,7 @@ const fonts = [
 
 export function PayClient({
   clientSecret,
+  paymentIntentId,
   returnUrl,
   amount,
   currency,
@@ -51,6 +52,7 @@ export function PayClient({
   merchant,
 }: {
   clientSecret: string;
+  paymentIntentId: string;
   returnUrl: string;
   amount: number;
   currency: string;
@@ -126,7 +128,7 @@ export function PayClient({
 
           <div className="mt-8 rounded-[26px] border border-almond bg-linen/70 p-5 shadow-[0_30px_70px_-45px_rgba(32,34,28,0.5)] sm:p-8">
             <Elements stripe={stripePromise} options={{ clientSecret, appearance, fonts }}>
-              <PaymentForm returnUrl={returnUrl} total={total} />
+              <PaymentForm paymentIntentId={paymentIntentId} total={total} />
             </Elements>
           </div>
 
